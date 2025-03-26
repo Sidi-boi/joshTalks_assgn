@@ -3,7 +3,6 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.contrib.auth import login, authenticate
-import datetime
 
 from .models import User, Task
 from .serializers import TaskSerializer, TaskCreateSerializer, TaskAssignmentSerializer, UserCreateSerializer, UserLoginSerializer 
@@ -127,3 +126,31 @@ def get_user_tasks(request, user_id=None):
 
         serializer = TaskSerializer(tasks, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def update_status(request, task_id):
+    try:
+        task = Task.objects.get(pk=task_id)
+    except Task.DoesNotExist:
+        return Response({"error": "Task not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    # Check if the user has permission to update the task
+    if not (is_admin_user(request.user) and (task.created_by == request.user)) and request.user not in task.assigned_users.all():
+        return Response({"error": "Forbidden: You can only update tasks assigned to you or tasks you created (if admin)."},
+                        status=status.HTTP_403_FORBIDDEN)
+
+    # Allow updating only the status field
+    status_choices = [choice[0] for choice in Task.STATUS_CHOICES]
+    new_status = request.data.get('status')
+
+    if new_status not in status_choices:
+        return Response({"error": "Invalid status. Choose from: " + ", ".join(status_choices)},
+                        status=status.HTTP_400_BAD_REQUEST)
+
+    task.status = new_status
+    task.save()
+
+    return Response({"message": "Task status updated successfully", "task_id": task.id, "new_status": task.status},
+                    status=status.HTTP_200_OK)
+
