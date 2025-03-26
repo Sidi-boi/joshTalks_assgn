@@ -6,23 +6,24 @@ from django.contrib.auth import login, authenticate
 from logger import logger
 
 from .models import User, Task
-from .serializers import TaskSerializer, TaskCreateSerializer, TaskAssignmentSerializer, UserCreateSerializer, UserLoginSerializer 
+from .serializers import TaskSerializer, TaskCreateSerializer, TaskAssignmentSerializer, UserCreateSerializer 
 
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
-def sign_up(reqeust):
+def sign_up(request):
     logger.info("Initialized sign up flow")
     try:
-        serializer = UserCreateSerializer(data = reqeust.data)
+        serializer = UserCreateSerializer(data = request.data)
 
         if serializer.is_valid():
             serializer.save()
             return Response({"message":"user created successfully"}, status=status.HTTP_201_CREATED)
+        
         logger.info(f"{serializer.validated_data.get('username')} signed up")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
-        logger.info("error: ", e)
+        logger.info(f"error:  {e}")
         return Response({"error":"Something Went wrong, Please try agian after some time"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['POST'])
@@ -30,28 +31,22 @@ def sign_up(reqeust):
 def login(request):
     logger.info("Initialized login flow")
     try:
-        serializer = UserLoginSerializer(data=request.data)
-        if serializer.is_valid():
-            username = serializer.validated_data.get('username')
-            password = serializer.validated_data.get('password')
-            
-            
+        username = request.data.get('username')
+        password = request.data.get('password')
 
-            if not User.objects.filter(username = username).exists():
-                return Response({'error':"Invalid Username"}, status=status.HTTP_400_BAD_REQUEST)
-            
-            user = authenticate(username=username, password=password)
+        if not User.objects.filter(username = username).exists():
+            return Response({'error':"Invalid Username"}, status=status.HTTP_400_BAD_REQUEST)
+        logger.info(username+ " " + password)
+        user = authenticate(username=username, password=password)
 
-            if user is None:
-                return Response({'error':"Incorrect Password, Please try again"}, status=status.HTTP_400_BAD_REQUEST)
-            else:
-                login(request, user)
-                logger.info("user logged in successfully")
-                return Response({'message':'Login Successful'},status=status.HTTP_202_ACCEPTED)
-        
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        if user is None:
+            return Response({'error':"Incorrect Password, Please try again"}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            login(request, user)
+            logger.info("user logged in successfully")
+            return Response({'message':'Login Successful'},status=status.HTTP_202_ACCEPTED)
     except Exception as e:
-        logger.info("error: ", e)
+        logger.info(f"error:  {e}")
         return Response({"error":"Something Went wrong, Please try agian after some time"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['POST'])
@@ -63,6 +58,7 @@ def logout(request):
         logger.info("user Logged out successfully")
         return Response({'message': 'Logged out successfully'})
     except Exception as e:
+        logger.info(f"error:  {e}")
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 def is_admin_user(user):
@@ -87,7 +83,7 @@ def create_task(request):
         logger.info("task created successfully")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
-        logger.info("error: ", e)
+        logger.info(f"error:  {e}")
         return Response({"error":"Something Went wrong, Please try agian after some time"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['PUT'])
@@ -128,7 +124,7 @@ def assign_task(request):
         logger.info("assigned task successfully")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
-        logger.info("error: ", e)
+        logger.info(f"error:  {e}")
         return Response({"error":"Something Went wrong, Please try agian after some time"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -161,7 +157,7 @@ def get_user_tasks(request, user_id=None):
             serializer = TaskSerializer(tasks, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
     except Exception as e:
-        logger.info("error: ", e)
+        logger.info(f"error:  {e}")
         return Response({"error":"Something Went wrong, Please try agian after some time"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 @api_view(['PATCH'])
@@ -192,6 +188,6 @@ def update_status(request, task_id):
         return Response({"message": "Task status updated successfully", "task_id": task.id, "new_status": task.status},
                         status=status.HTTP_200_OK)
     except Exception as e:
-        logger.info("error: ", e)
+        logger.info(f"error:  {e}")
         return Response({"error":"Something Went wrong, Please try agian after some time"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

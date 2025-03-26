@@ -25,7 +25,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
         
 
     def create(self, validated_data):
-        user = User.objects.create(
+        user = User.objects.create_user(
             username = validated_data['username'],
             email = validated_data['email'],
             mobile = validated_data.get('mobile',None),
@@ -35,23 +35,6 @@ class UserCreateSerializer(serializers.ModelSerializer):
         user.set_password(validated_data['password'])
         user.save()
         return user
-
-class UserLoginSerializer(serializers.Serializer):
-    username = serializers.CharField(required=True)
-    password = serializers.CharField(write_only=True, required=True)
-
-    def validate(self, data):
-      username = data.get('username')
-      password = data.get('password')
-      if username and password:
-        user = authenticate(username=username, password=password)
-        if not user:
-          raise serializers.ValidationError("Invalid Credentials")
-      else:
-        raise serializers.ValidationError("Username and password are required")
-
-      data['user'] = user
-      return data
 
 class TaskSerializer(serializers.ModelSerializer):
     assigned_users = UserSerializer(many=True, read_only=True) 

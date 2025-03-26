@@ -28,6 +28,10 @@ class TaskManagementAPITest(TestCase):
             status="pending"
         )
         self.task.assigned_users.add(self.user)
+        self.admin_user.set_password("adminpass")
+        self.admin_user.save()
+
+        print(User.objects.all())  # Check if users exist in test DB
 
     def test_user_registration(self):
         data = {"username": "newuser", "email": "newuser@example.com", "password": "newpass"}
@@ -36,7 +40,7 @@ class TaskManagementAPITest(TestCase):
 
     def test_user_login(self):
         data = {"username": "adminuser", "password": "adminpass"}
-        response = self.client.post("/login/", data)
+        response = self.client.post("/login/", data, format='json')
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
 
     def test_create_task_admin(self):
