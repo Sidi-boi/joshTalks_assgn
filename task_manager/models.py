@@ -6,8 +6,7 @@ class User(AbstractUser):
     def __str__(self):
         return self.username
     
-    # id = models.UUIDField(unique=True)
-    username = models.CharField(max_length=255)
+    username = models.CharField(max_length=255, unique=True)
     email = models.EmailField(unique=True)
     mobile = models.CharField(max_length=15, null=True, blank=True)
     is_admin = models.BooleanField(default=False)
@@ -40,9 +39,8 @@ class Task(models.Model):
     def __str__(self):
         return self.name
 
-    # id = models.UUIDField(unique=True)
     assigned_users = models.ManyToManyField(User, related_name='tasks')
-    created_at = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_by', null=False, blank=False)
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_by', null=False, blank=False, default='1')
     name = models.CharField(max_length=300)
     desc = models.CharField(max_length=5000, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
