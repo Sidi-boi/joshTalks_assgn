@@ -4,12 +4,13 @@ from django.contrib.auth.models import AbstractUser
 class User(AbstractUser):
 
     def __str__(self):
-        return self.name
+        return self.username
     
     # id = models.UUIDField(unique=True)
-    name = models.CharField(max_length=255)
+    username = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
-    modile = models.CharField(max_length=15, null=True, blank=True)
+    mobile = models.CharField(max_length=15, null=True, blank=True)
+    is_admin = models.BooleanField(default=False)
 
     groups = models.ManyToManyField(
         "auth.Group",
@@ -41,6 +42,7 @@ class Task(models.Model):
 
     # id = models.UUIDField(unique=True)
     assigned_users = models.ManyToManyField(User, related_name='tasks')
+    created_at = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_by', null=False, blank=False)
     name = models.CharField(max_length=300)
     desc = models.CharField(max_length=5000, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
